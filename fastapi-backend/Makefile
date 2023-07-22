@@ -27,9 +27,14 @@ clean:
 	rm -rf .pytest_cache
 	rm -rf .mypy_cache
 
-run:
+run: .venv
 	# Run the app
-	uvicorn main:app --host 0.0.0.0 --port 8000
+	.venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000
+
+.venv: requirements.txt
+	# Create virtual environment
+	python3 -m venv .venv
+	.venv/bin/pip install -r requirements.txt
 
 docker-build:
 	# Build the Docker image
