@@ -11,6 +11,11 @@ install:
 	# Python dependencies
 	pip install -r requirements.txt
 
+.PHONY: ngrok-tunnel
+ngrok-tunnel:
+	command -v ngrok >/dev/null 2>&1 || (brew install ngrok)
+	ngrok http 8000
+
 clean:
 	# Delete Python artifacts
 	find . -name '*.pyc' -exec rm '{}' ';'
