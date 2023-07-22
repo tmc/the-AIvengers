@@ -1,0 +1,36 @@
+# Configuration for Apollo Router
+---
+sandbox:
+  enabled: true
+supergraph:
+  listen: 0.0.0.0:4000
+  introspection: true
+cors:
+  allow_any_origin: true
+telemetry:
+  tracing:
+    trace_config:
+      parent_based_sampler: false
+      service_name: "graphql-gateway"
+      # service_namespace: "gateway"
+      sampler: 1
+    propagation:
+      baggage: true
+      trace_context: true
+    otlp:
+      endpoint: "otel-collector:4317"
+    experimental_response_trace_id:
+      enabled: true
+      header_name: "x-trace-id"
+  metrics:
+    common:
+      service_name: "graphql-gateway"
+    prometheus:
+      enabled: true
+      listen: 0.0.0.0:4000
+      path: /metrics
+headers:
+  all:
+    request:
+      - propagate:
+          matching: .*

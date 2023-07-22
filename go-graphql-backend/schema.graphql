@@ -1,0 +1,20 @@
+# GraphQL schema example
+
+type User @key(fields: "id") {
+  id: ID!
+  description: String!
+}
+
+type Query {
+  user(id: ID!): User
+}
+
+type Subscription {
+  testSubscription: String!
+  genericCompletion(prompt: String!): CompletionChunk
+}
+
+type CompletionChunk {
+  text: String!
+  isLast: Boolean!
+}

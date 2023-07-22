@@ -1,0 +1,12 @@
+# Configuration for Apollo Router supergraph configuration
+---
+federation_version: =2.3.2
+subgraphs:
+  backend-a:
+    routing_url: http://backend-a:8000/graphql
+    schema:
+      file: ../graphene-backend/schema.graphql
+  backend-b:
+    routing_url: http://backend-b:8080/graphql
+    schema:
+      file: ../go-graphql-backend/schema.graphql
