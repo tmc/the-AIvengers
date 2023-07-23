@@ -34,16 +34,21 @@ async def handle_incoming_webhook(payload: dict):
     """
     Handle incoming webhook from Linear
     """
-    print("handle_incoming_webhook")
-    print("payload:", payload)
+    print("payload:", json.dumps(payload))
+    j = payload
 
-    # create a chat completion
-    initial_event_completion = await perform_initial_event_completion(payload)
-    print("initial event completion:", initial_event_completion)
+    is_update = j["action"] == "update"
+    is_create = j["action"] == "create"
+    assignee_changed = "assigneeId" in j.get("updatedFrom", {})
+    status_changed = "stateId" in j.get("updatedFrom", {})
+
+    # initial_event_completion = await perform_initial_event_completion(payload)
+    # print("initial event completion:", initial_event_completion)
+
+    # TODO: determine which agent to invoke
+    return None
 
 
-# ORACLE_SYSTEM_PROMPT = """
-# """
 ORACLE_FUNCTIONS = [
     {
         "name": "assign_to",
@@ -60,6 +65,7 @@ ORACLE_FUNCTIONS = [
         }
     }
 ]
+
 async def perform_initial_event_completion(payload: dict):
     messages = []
     messages.append({"role": "system", "content": """Don't make assumptions about what values to plug into functions.
