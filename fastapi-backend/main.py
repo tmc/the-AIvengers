@@ -2,6 +2,7 @@
 
 import os
 import openai
+import json
 from fastapi import FastAPI, Request
 
 from dotenv import load_dotenv
@@ -48,27 +49,34 @@ ORACLE_FUNCTIONS = [
         "name": "assign_to",
         "description": "Assign this issue to another team member.",
         "parameters": {
-            {
-                "name": "assignee",
-                "description": "The team member to assign this issue to.",
-                "type": "string",
-                "required": True,
-                "enum": ["pm", "architect", "swe"],
+            "type": "object",
+            "properties": {
+                "assignee": {
+                    "description": "The team member to assign this issue to.",
+                    "type": "string",
+                    "enum": ["pm", "architect", "swe"],
+                }
             }
-        ]
+        }
     }
 ]
 async def perform_initial_event_completion(payload: dict):
     messages = []
-    messages.append({"role": "system", "content": "Don't make assumptions about what values to plug into functions. Ask for clarification if a user request is ambiguous."})
-    messages.append({"role": "user", "content": f"""what should we do with this Linear issue:
-```
-{payload}
-```
-"""})
+    messages.append({"role": "system", "content": """Don't make assumptions about what values to plug into functions.
+
+The following assignee values are valid: pm, architect, swe."""})
+    messages.append({"role": "user", "content": f"""Here is the linear issue in JSON form:
+```{payload}```
+
+if this issue seems like it should be reassigned please do so."""})
+    print(messages)
     chat_completion = openai.ChatCompletion.create(model="gpt-4", messages=messages, functions=ORACLE_FUNCTIONS)
     # print the chat completion
-    print(chat_completion.choices[0].message.content)
+    print(json.dumps(chat_completion.choices[0].message.content))
+
+    # TODO:
+    # look for function calls in the chat completion, and if there are any, call the function.
+
     return chat_completion.choices[0].message.content
 
 
