@@ -8,6 +8,6 @@ load_dotenv()
 
 app = FastAPI()
 
-@app.get("/")
+@app.get("/webhooks/linear")
 async def root():
     return {"message": "Hello World"}
