@@ -1,10 +1,13 @@
 import json
 from plantuml import PlantUML
 from typing import Dict
-
-from gpt import GPTInstance
-from examples.architect import uml_examples, folder_examples
-
+from linear_client import LinearClient
+from agents.gpt import GPTInstance
+from agents.examples.architect import uml_examples, folder_examples
+from linear_types import (
+    CommentCreateInput,
+)
+import os
 PLANT_UML_SERVER = PlantUML(url="http://www.plantuml.com/plantuml/img/")
 
 
@@ -13,13 +16,12 @@ def process_uml_code(uml_code: str) -> str:
 
 
 def generate_uml_code(
-    project_requirements: str, framework_lang: str, framework_ts: str, 
+    project_requirements: str, framework_lang: str, framework_ts: str,
     # framework_db: str, framework_int: str,
     max_retries: int = 3
 ) -> Dict:
     print("generate_uml_code")
     print(project_requirements)
-    
 
     FALLBACK_ERROR_MESSAGE = {
         "url": None,
@@ -220,21 +222,32 @@ def download_repo(endpoints: dict):
     return buffer
 
 
-if __name__ == "__main__":
-    project_req = "a project to build a website for a restaurant"
-    framework_lang = "python"
+async def architect(project_req, issue_id, framework_lang="js", framework_ts="react native"):
+    # api_key = os.getenv("LINEAR_API_KEY_ARCHITECT")
+    # LINEAR_API_KEY = os.environ.get("LINEAR_API_KEY", "")
+    os.environ['LINEAR_API_KEY'] = "lin_api_DmSKJnkgwmo5H36Ftx6jSdAwJaPqtuHHAJWag86S"
+    client = LinearClient(endpoint="https://api.linear.app/graphql")
+    # client.set_api_key(api_key)
+
     
-    
-    output = generate_uml_code(project_requirements="a react native js app that shows `hello world`",
-                      framework_lang="javascript", framework_ts="react native", 
-                    #   framework_db="mysql", framework_int="none"
-                      )
+
+    output = generate_uml_code(project_requirements=project_req,
+                               framework_lang=framework_lang, framework_ts=framework_ts
+                               )
     uml_code = output.get("uml_code")
     print(output)
     if uml_code:
         print('generating file structure')
-        folder_output = codegen(problem_description="a react native js app that shows `hello world`",
-                                             uml_code=uml_code)
+        folder_output = codegen(problem_description=project_req,
+                                uml_code=uml_code)
+        await client.create_comment(
+            CommentCreateInput(
+                body="generated folder structure: " + folder_output.__str__(),
+                issue_id=issue_id,
+                # parent_id=None,
+            ))
         print(folder_output)
-        
-    
+
+
+if __name__ == "__main__":
+    architect("a react native js app that shows `hello world`", issue_id="AI-12")

@@ -6,6 +6,8 @@ import json
 from fastapi import FastAPI, Request
 
 from dotenv import load_dotenv
+from agents.architect import architect
+import asyncio
 load_dotenv()
 
 openai.api_key = os.environ.get("OPENAI_API_KEY")
@@ -36,6 +38,7 @@ async def handle_incoming_webhook(payload: dict):
     """
     print("handle_incoming_webhook")
     print("payload:", payload)
+    
 
     # create a chat completion
     initial_event_completion = await perform_initial_event_completion(payload)
@@ -80,3 +83,6 @@ if this issue seems like it should be reassigned please do so."""})
     return chat_completion.choices[0].message.content
 
 
+
+if __name__ == "__main__":
+    asyncio.run(architect("a react native js app that shows `hello world`", issue_id="AI-12"))
