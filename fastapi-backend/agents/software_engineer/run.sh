@@ -1,3 +1,4 @@
+pip install -r requirements.txt
 uvicorn api:app --reload
 
 curl -X POST "http://127.0.0.1:8000/write_code/" -H "Content-Type: application/json" -d '{

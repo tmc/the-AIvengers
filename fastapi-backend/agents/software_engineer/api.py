@@ -24,11 +24,11 @@ Constraints:
 llm = OpenAI(temperature=0.9, model_name='gpt-4')
 
 def extract_code(string):
-    pattern = r'```javascript\s+(.*?)\s+```'
-    match = re.search(pattern, string, re.DOTALL)
-    if match:
-        code = match.group(1)
-        return code
+    pattern = r'```(jsx|javascript)\s+(.*?)\s+```'
+    matches = re.findall(pattern, string, re.DOTALL)
+    if matches:
+        code_blocks = [match[1] for match in matches]
+        return "\n".join(code_blocks)
     else:
         return string
 
