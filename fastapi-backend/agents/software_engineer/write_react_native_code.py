@@ -29,7 +29,7 @@ def extract_code(string):
     else:
         return string
 
-def write_code(input_prompt=prompt, out_file=None):
+def write_code(input_prompt=prompt, out_file='./App.js'):
     res = llm.predict(input_prompt)
     extracted_code = extract_code(res)
 
