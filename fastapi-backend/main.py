@@ -4,7 +4,6 @@ import openai
 import json
 from fastapi import FastAPI, Request
 from dotenv import load_dotenv
-from fastapi-backend.agent.software_engineer import write_code
 
 
 load_dotenv()
