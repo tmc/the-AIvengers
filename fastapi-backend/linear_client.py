@@ -523,14 +523,14 @@ class LinearClient:
             "body": input.body,
             "issueId": input.issue_id,
         }
-        if input.parent_id is not None:
-            variables["parentId"] = input.parent_id
+        # if input.parent_id is not None:
+        #     variables["parentId"] = input.parent_id
         print("variables:", json.dumps(variables))
         result = await self._arun_graphql_query(QUERIES["create_comment"], variables)
         print(result)
         if "errors" in result:
             raise LinearError(result["errors"])
-        return Comment(**result["data"]["commentCreate"]["comment"])
+        # return Comment(**result["data"]["commentCreate"]["comment"])
 
     # attachment
     async def create_attachment(self, input: AttachmentCreateInput):

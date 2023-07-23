@@ -406,14 +406,14 @@ class ExternalUser(BaseModel):
 
 class CommentCreateInput(BaseModel):
     body: Optional[str]
-    body_data: Optional[Any]
-    create_as_user: Optional[str]
-    created_at: Optional[Any]
-    display_icon_url: Optional[str]
-    do_not_subscribe_to_issue: Optional[bool]
-    id: Optional[str]
+    # body_data: Optional[Any]
+    # create_as_user: Optional[str]
+    # created_at: Optional[Any]
+    # display_icon_url: Optional[str]
+    # do_not_subscribe_to_issue: Optional[bool]
+    # id: Optional[str]
     issue_id: str
-    parent_id: Optional[str]
+    # parent_id: Optional[str]
 
 
 class Attachment(BaseModel):
