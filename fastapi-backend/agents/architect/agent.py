@@ -1,22 +1,21 @@
 import json
 from plantuml import PlantUML
 from typing import Dict
+from agents.architect.gpt import GPTInstance
+from agents.architect.examples import uml_examples, folder_examples
 from linear_client import LinearClient
-from agents.gpt import GPTInstance
-from agents.examples.architect import uml_examples, folder_examples
-from linear_types import (
-    CommentCreateInput,
-)
 from aivengers import Agent
 import os
+
+
 PLANT_UML_SERVER = PlantUML(url="http://www.plantuml.com/plantuml/img/")
 
 
 class ArchitectAgent(Agent):
-    def __init__(self, issue_id: str):
+    def __init__(self):
         self.name = "architect"
         self.description = "Software Architect"
-        self.issue_id = issue_id
+        self.linear_id = os.getenv("LINEAR_ID_ARCHITECT")
         
         os.environ['LINEAR_API_KEY'] = os.getenv(
             "LINEAR_API_KEY_ARCHITECT", os.environ['LINEAR_API_KEY'])
@@ -214,23 +213,27 @@ class ArchitectAgent(Agent):
 
         return FALLBACK_ERROR_MESSAGE
 
-    async def __call__(self, project_req, issue_id, framework_lang="js", framework_ts="react native"):
-        client = LinearClient(endpoint="https://api.linear.app/graphql")
-        await client.create_comment(CommentCreateInput(
-            body="I'm a software architect agent. I'll be helping you with this issue.",
-            issue_id=issue_id,
-        ))
+   
+        
+    async def assign_to_swe(self, client: LinearClient, issue_id: str):
+        swe_id = os.getenv("LINEAR_ID_SWE")
+        if not swe_id:
+            raise Exception("SWE ID not found")
+        await client.assign_issue(issue_id=issue_id, assignee_id=swe_id)
 
+
+    async def __call__(self, issue_id, project_req, framework_lang="js", framework_ts="react native"):
+        client = self.init_client()
+        await self.start_up_comment(client, issue_id)
+        
         output = self.generate_uml_code(project_requirements=project_req,
                                         framework_lang=framework_lang, framework_ts=framework_ts
                                         )
         uml_code = output.get("uml_code")
-        await client.create_comment(
-            CommentCreateInput(
-                body="Generated UML diagram: " +
-                output['url'] + "\n" + output.get("comments"),
+        await self.comment(client=client,
+                body="Generated UML diagram: " + output['url'] + "\n" + output.get("comments"),
                 issue_id=issue_id,
-            ))
+            )
 
         folder_output = None
 
@@ -238,21 +241,17 @@ class ArchitectAgent(Agent):
             print('generating file structure')
             folder_output = self.codegen(problem_description=project_req,
                                          uml_code=uml_code)
-            await client.create_comment(
-                CommentCreateInput(
+            await self.comment(client=client,
                     body="generated folder structure: " + '\n```\n' + folder_output.__str__() +
                     '\n```',
                     issue_id=issue_id,
                     # parent_id=None,
-                ))
+                )
             print(folder_output)
 
-        await client.create_comment(
-            CommentCreateInput(
-                body="Done",
-                issue_id=issue_id,
-                # parent_id=None,
-            ))
+        await self.comment(client=client,body="Done",issue_id=issue_id)
+        
         # TODO: call the swe/oracle agent
+        await self.assign_to_swe(client, issue_id)
 
         return uml_code, folder_output
