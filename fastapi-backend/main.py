@@ -1,5 +1,6 @@
 # hackathon templates - fastapi backend - main.py
 
+from aivengers import Agent
 import os
 import openai
 import json
@@ -7,14 +8,12 @@ from fastapi import FastAPI, Request
 
 from dotenv import load_dotenv
 from agents.architect import ArchitectAgent
-import asyncio
-load_dotenv()
 
-openai.api_key = os.environ.get("OPENAI_API_KEY")
+
+load_dotenv()
 
 app = FastAPI()
 
-from aivengers import Agent
 
 AGENTS = {
     "oracle": Agent(name="pm", description="Product Manager"),
@@ -22,6 +21,7 @@ AGENTS = {
     "architect": Agent(name="architect", description="Architect"),
     "swe": Agent(name="swe", description="Software Engineer"),
 }
+
 
 @app.post("/webhooks/linear")
 async def webhooks_linear(request: Request):
@@ -47,8 +47,9 @@ async def handle_incoming_webhook(payload: dict):
     print("is_create:", is_create)
     print("assignee_changed:", assignee_changed)
     print("status_changed:", status_changed)
-    
+
     if assignee_changed:
+        assignee_id = j["data"].get("assigneeId")
         issue_id = j["data"]["team"]["key"] + "-" + str(j["data"]["number"])
         print("issue_id:", issue_id)
         title = j["data"]["title"]
@@ -58,10 +59,13 @@ async def handle_incoming_webhook(payload: dict):
         initial_event_completion = await perform_initial_event_completion(payload)
         print("initial event completion:", initial_event_completion)
 
+        # current: invoke based on assigneeId - future: invoke based on oracle
+        if assignee_id == "5a9ee6b8-acbd-4142-9ab9-8a9c3f5daf27":  # architect id
+            uml, folder_output = await ArchitectAgent(issue_id=issue_id)(project_req=title + "\n" + description, issue_id=issue_id)
+            print("uml:", uml)
+            print("folder_output:", folder_output)
+
         # TODO: determine which agent to invoke
-        uml, folder_output = await ArchitectAgent(issue_id=issue_id)(project_req=title + " " + description, issue_id=issue_id)
-        print("uml:", uml)
-        print("folder_output:", folder_output)
         return None
 
 
@@ -82,6 +86,7 @@ ORACLE_FUNCTIONS = [
     }
 ]
 
+
 async def perform_initial_event_completion(payload: dict):
     messages = []
     messages.append({"role": "system", "content": """Don't make assumptions about what values to plug into functions.
@@ -92,11 +97,15 @@ The following assignee values are valid: pm, architect, swe."""})
 
 if this issue seems like it should be reassigned please do so."""})
     print(messages)
-    chat_completion = openai.ChatCompletion.create(model="gpt-4", messages=messages, functions=ORACLE_FUNCTIONS)
+    chat_completion = openai.ChatCompletion.create(
+        model="gpt-4", messages=messages, functions=ORACLE_FUNCTIONS)
     # print the chat completion
-    print(json.dumps(chat_completion.choices[0].message.content))
+    message = chat_completion.choices[0].message
+    print(json.dumps(message.content))
 
-    # TODO:
-    # look for function calls in the chat completion, and if there are any, call the function.
-
+    if message.get("function_call"):
+        function_output = message["function_call"]["arguments"]
+        print(function_output)
+        return function_output
+        
     return chat_completion.choices[0].message.content
