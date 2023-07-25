@@ -19,7 +19,7 @@ class Agent:
         await client.create_comment(CommentCreateInput(body=body, issue_id=issue_id))
         
     async def start_up_comment(self, client: LinearClient, issue_id: str):
-        await self.comment(client, issue_id, "Starting " + self.name + " Agent")
+        await self.comment(client, issue_id, "Starting " + self.name + " agent")
         
         
         
