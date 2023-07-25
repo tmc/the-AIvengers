@@ -3,6 +3,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 from langchain.llms import OpenAI
+from langchain.chat_models import ChatOpenAI
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 import re
@@ -21,7 +22,7 @@ Constraints:
 '''
 
 # llm = OpenAI(temperature=0.9, model_name='gpt-3.5-turbo-0613')
-llm = OpenAI(temperature=0.9, model_name='gpt-4')
+llm = ChatOpenAI(temperature=0.9, model_name='gpt-4')
 
 def extract_code(string):
     pattern = r'```(jsx|javascript)\s+(.*?)\s+```'

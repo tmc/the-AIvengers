@@ -1,5 +1,5 @@
 import argparse
-from langchain.llms import OpenAI
+from langchain.chat_models import ChatOpenAI
 import re
 
 prompt = '''
@@ -18,7 +18,7 @@ Constraints:
 // Your javascript code here:
 '''
 
-llm = OpenAI(temperature=0.9, model_name='gpt-3.5-turbo-0613')
+llm = ChatOpenAI(temperature=0.9, model_name='gpt-3.5-turbo-0613')
 
 def extract_code(string):
     pattern = r'```javascript\s+(.*?)\s+```'
