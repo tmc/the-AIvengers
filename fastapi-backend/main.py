@@ -6,7 +6,7 @@ import json
 from fastapi import FastAPI, Request
 
 from dotenv import load_dotenv
-from agents.architect import architect
+from agents.architect import ArchitectAgent
 import asyncio
 load_dotenv()
 
@@ -43,12 +43,26 @@ async def handle_incoming_webhook(payload: dict):
     is_create = j["action"] == "create"
     assignee_changed = "assigneeId" in j.get("updatedFrom", {})
     status_changed = "stateId" in j.get("updatedFrom", {})
+    print("is_update:", is_update)
+    print("is_create:", is_create)
+    print("assignee_changed:", assignee_changed)
+    print("status_changed:", status_changed)
+    
+    if assignee_changed:
+        issue_id = j["data"]["team"]["key"] + "-" + str(j["data"]["number"])
+        print("issue_id:", issue_id)
+        title = j["data"]["title"]
+        description = j["data"]["description"]
+        print("title:", title)
+        print("description:", description)
+        initial_event_completion = await perform_initial_event_completion(payload)
+        print("initial event completion:", initial_event_completion)
 
-    # initial_event_completion = await perform_initial_event_completion(payload)
-    # print("initial event completion:", initial_event_completion)
-
-    # TODO: determine which agent to invoke
-    return None
+        # TODO: determine which agent to invoke
+        uml, folder_output = await ArchitectAgent(issue_id=issue_id)(project_req=title + " " + description, issue_id=issue_id)
+        print("uml:", uml)
+        print("folder_output:", folder_output)
+        return None
 
 
 ORACLE_FUNCTIONS = [
@@ -86,8 +100,3 @@ if this issue seems like it should be reassigned please do so."""})
     # look for function calls in the chat completion, and if there are any, call the function.
 
     return chat_completion.choices[0].message.content
-
-
-
-if __name__ == "__main__":
-    asyncio.run(architect("a react native js app that shows `hello world`", issue_id="AI-12"))
