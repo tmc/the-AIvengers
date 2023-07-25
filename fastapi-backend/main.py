@@ -7,7 +7,8 @@ import json
 from fastapi import FastAPI, Request
 
 from dotenv import load_dotenv
-from agents.architect import ArchitectAgent
+from agents.architect.agent import ArchitectAgent
+from agents.software_engineer.agent import SWEAgent
 
 
 load_dotenv()
@@ -16,10 +17,10 @@ app = FastAPI()
 
 
 AGENTS = {
-    "oracle": Agent(name="pm", description="Product Manager"),
-    "pm": Agent(name="pm", description="Product Manager"),
-    "architect": Agent(name="architect", description="Architect"),
-    "swe": Agent(name="swe", description="Software Engineer"),
+    "oracle": Agent(name="oracle", description="Oracle that oversees the project", linear_id=os.getenv("LINEAR_ID_ORACLE")),
+    "pm": Agent(name="pm", description="Product Manager", linear_id=os.getenv("LINEAR_ID_PM")),
+    "architect": ArchitectAgent(),
+    "swe": SWEAgent(),
 }
 
 
@@ -36,7 +37,7 @@ async def handle_incoming_webhook(payload: dict):
     """
     Handle incoming webhook from Linear
     """
-    print("payload:", json.dumps(payload))
+    print("payload:", json.dumps(payload, indent=2))
     j = payload
 
     is_update = j["action"] == "update"
@@ -51,19 +52,24 @@ async def handle_incoming_webhook(payload: dict):
     if assignee_changed:
         assignee_id = j["data"].get("assigneeId")
         issue_id = j["data"]["team"]["key"] + "-" + str(j["data"]["number"])
-        print("issue_id:", issue_id)
         title = j["data"]["title"]
         description = j["data"]["description"]
-        print("title:", title)
-        print("description:", description)
-        initial_event_completion = await perform_initial_event_completion(payload)
-        print("initial event completion:", initial_event_completion)
+        # initial_event_completion = await perform_initial_event_completion(payload)
+        # print("initial event completion:", initial_event_completion)
 
         # current: invoke based on assigneeId - future: invoke based on oracle
-        if assignee_id == "5a9ee6b8-acbd-4142-9ab9-8a9c3f5daf27":  # architect id
-            uml, folder_output = await ArchitectAgent(issue_id=issue_id)(project_req=title + "\n" + description, issue_id=issue_id)
-            print("uml:", uml)
-            print("folder_output:", folder_output)
+        if assignee_id == AGENTS["architect"].linear_id: 
+            architect_agent = ArchitectAgent()
+            uml, folder_output = await architect_agent(project_req=title + "\n" + description, 
+                                                       issue_id=issue_id)
+            print('completed uml and folder_output')
+            swe_agent = SWEAgent()
+            await swe_agent(issue_id=issue_id, project_req=title + "\n" + description, uml=uml, folder_output=folder_output)
+            
+        if assignee_id == AGENTS["swe"].linear_id:
+            swe_agent = SWEAgent()
+            await swe_agent(issue_id=issue_id, project_req=title + "\n" + description)
+            
 
         # TODO: determine which agent to invoke
         return None
