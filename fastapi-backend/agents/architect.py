@@ -236,6 +236,8 @@ async def architect(project_req, issue_id, framework_lang="js", framework_ts="re
                                )
     uml_code = output.get("uml_code")
     print(output)
+    folder_output = None
+    
     if uml_code:
         print('generating file structure')
         folder_output = codegen(problem_description=project_req,
@@ -247,7 +249,11 @@ async def architect(project_req, issue_id, framework_lang="js", framework_ts="re
                 # parent_id=None,
             ))
         print(folder_output)
+        
+    return uml_code, folder_output
 
 
 if __name__ == "__main__":
-    architect("a react native js app that shows `hello world`", issue_id="AI-12")
+    uml_code, folder_output = architect("a react native js app that shows `hello world`", issue_id="AI-12")
+    
+    # pass it to developer
