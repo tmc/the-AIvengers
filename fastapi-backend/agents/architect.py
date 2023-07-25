@@ -7,18 +7,22 @@ from agents.examples.architect import uml_examples, folder_examples
 from linear_types import (
     CommentCreateInput,
 )
+from aivengers import Agent
 import os
 PLANT_UML_SERVER = PlantUML(url="http://www.plantuml.com/plantuml/img/")
 
-class ArchitectAgent:
+
+class ArchitectAgent(Agent):
     def __init__(self, issue_id: str):
         self.name = "architect"
         self.description = "Software Architect"
-        self.issue_id = issue_id    
+        self.issue_id = issue_id
+        
+        os.environ['LINEAR_API_KEY'] = os.getenv(
+            "LINEAR_API_KEY_ARCHITECT", os.environ['LINEAR_API_KEY'])
 
     def process_uml_code(self, uml_code: str) -> str:
         return PLANT_UML_SERVER.get_url(uml_code)
-
 
     def generate_uml_code(
         self,
@@ -106,7 +110,6 @@ class ArchitectAgent:
 
         return FALLBACK_ERROR_MESSAGE
 
-
     def codegen(self, problem_description: str, uml_code: str) -> str:
         folder_structure_agent = GPTInstance(
             system_prompt="Given a UML diagram and problem description, generate the folder structure, include explicit names for the repo to implement it",
@@ -145,7 +148,6 @@ class ArchitectAgent:
             arguments = json.loads(arguments)
 
             return arguments
-
 
     def folder_structure_gen(self, problem_description: str, uml_code: str, max_retries: int = 3) -> str:
         FALLBACK_ERROR_MESSAGE = {
@@ -212,10 +214,7 @@ class ArchitectAgent:
 
         return FALLBACK_ERROR_MESSAGE
 
-
     async def __call__(self, project_req, issue_id, framework_lang="js", framework_ts="react native"):
-        os.environ['LINEAR_API_KEY'] = os.getenv(
-            "LINEAR_API_KEY_ARCHITECT", os.environ['LINEAR_API_KEY'])
         client = LinearClient(endpoint="https://api.linear.app/graphql")
         await client.create_comment(CommentCreateInput(
             body="I'm a software architect agent. I'll be helping you with this issue.",
@@ -223,29 +222,31 @@ class ArchitectAgent:
         ))
 
         output = self.generate_uml_code(project_requirements=project_req,
-                                framework_lang=framework_lang, framework_ts=framework_ts
-                                )
+                                        framework_lang=framework_lang, framework_ts=framework_ts
+                                        )
         uml_code = output.get("uml_code")
         await client.create_comment(
-                CommentCreateInput(
-                    body="Generated UML diagram: " + output['url'] + "\n" + output.get("comments"),
-                    issue_id=issue_id,
-                ))
+            CommentCreateInput(
+                body="Generated UML diagram: " +
+                output['url'] + "\n" + output.get("comments"),
+                issue_id=issue_id,
+            ))
 
         folder_output = None
 
         if uml_code:
             print('generating file structure')
             folder_output = self.codegen(problem_description=project_req,
-                                    uml_code=uml_code)
+                                         uml_code=uml_code)
             await client.create_comment(
                 CommentCreateInput(
-                    body="generated folder structure: " + '\n```\n' + folder_output.__str__() + '\n```',
+                    body="generated folder structure: " + '\n```\n' + folder_output.__str__() +
+                    '\n```',
                     issue_id=issue_id,
                     # parent_id=None,
                 ))
             print(folder_output)
-        
+
         await client.create_comment(
             CommentCreateInput(
                 body="Done",
