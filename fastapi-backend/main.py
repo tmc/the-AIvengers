@@ -9,7 +9,7 @@ from fastapi import FastAPI, Request
 from dotenv import load_dotenv
 from agents.architect.agent import ArchitectAgent
 from agents.software_engineer.agent import SWEAgent
-
+from agents.deployment_agent.agent import DeploymentAgent
 
 load_dotenv()
 
@@ -21,6 +21,7 @@ AGENTS = {
     "pm": Agent(name="pm", description="Product Manager", linear_id=os.getenv("LINEAR_ID_PM")),
     "architect": ArchitectAgent(),
     "swe": SWEAgent(),
+    "deployment": DeploymentAgent(),
 }
 
 
@@ -60,17 +61,22 @@ async def handle_incoming_webhook(payload: dict):
         # current: invoke based on assigneeId - future: invoke based on oracle
         if assignee_id == AGENTS["architect"].linear_id: 
             architect_agent = ArchitectAgent()
+
+            # for demo keep the architecture simple TODO: remove this
+            demo_architecture_restriction = "Include all the code only in App.js. Do not have multiple files."
+            description += "\n" + demo_architecture_restriction
+
             uml, folder_output = await architect_agent(project_req=title + "\n" + description, 
                                                        issue_id=issue_id)
             print('completed uml and folder_output')
             swe_agent = SWEAgent()
             await swe_agent(issue_id=issue_id, project_req=title + "\n" + description, uml=uml, folder_output=folder_output)
             
-        if assignee_id == AGENTS["swe"].linear_id:
-            swe_agent = SWEAgent()
-            await swe_agent(issue_id=issue_id, project_req=title + "\n" + description)
-            
+            print("starting deployment ...")
+            deployment_agent = DeploymentAgent()
+            await deployment_agent(issue_id=issue_id, project_name=title)
 
+        
         # TODO: determine which agent to invoke
         return None
 
