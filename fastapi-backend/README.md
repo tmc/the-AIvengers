@@ -1,3 +1,18 @@
+# How to run theAIvengers:
+
+1. navigate to fastapi-backend
+2. make a copy .env of the .env.example and add an openai-key
+3. create a venv
+4. activate the environment variables: touch .env
+5. install requirements (pip install -r requirements.txt)
+6. run the fastapi: make run
+7. in a 2nd terminal run the ngrok-tunnel: make ngrok-tunnel --> then paste the url in https://linear.app/agentic-dev-team/settings/api
+8. go to linear, add a new issue and assign the architect-role.
+
+# Additionally:
+npm install snack-sdk
+
+
 # Hackathon Template - FastAPI Backend
 
 This repository provides a starter template to help you quickly get going with a FastAPI backend at a hackathon.
